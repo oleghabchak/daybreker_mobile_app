@@ -1,1 +1,5 @@
-# daybreker_mobile_app
+App Demo Summary:
+Home Tab: The Home screen features a widget that displays real-time health data, including steps, heart rate, sleep patterns, and workout summaries. Integration with smartwatches through the Terra service: The app seamlessly connects with devices such as Whoop, Apple Watch, Google Fit, and Samsung Watch.
+Protocol Tab: This section allows users to log their daily food intake by scanning barcodes, making voice notes, and recording hydration and calorie intake.
+Mesocycle Management: Users can create and customize mesocycles, which break down workouts into exercises and sets. Users can create custom mesocycles, choose from a default list, create custom exercises and workouts, or generate them using AI. The first calibration set helps the app adjust weights and reps dynamically (users choose the maximum weight they can perform for 10 reps, and the algorithm provides a recommended weight for the next set). After finishing a workout, users enter feedback, and AI analyzes it and adjusts next week's weights and reps based on this data.
+Settings Tab: The Settings area provides profile customization, app theme changes, account deletion, and access to help and support. Users can edit their profile and manage their preferences for diet, exercise, sleep, and recovery.
