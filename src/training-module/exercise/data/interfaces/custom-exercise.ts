@@ -1,0 +1,30 @@
+export interface ICustomExercise {
+  id?: string;
+  source_exercise_id?: string;
+  name: string;
+  created_by_user_id: string;
+  is_compound: boolean;
+  is_unilateral: boolean;
+  execution_instructions: string;
+  breathing_pattern: string;
+  common_mistakes: string[];
+  coaching_cues: string[];
+  video_url?: string;
+  is_machine: boolean;
+  stability_requirement: number;
+  default_weight_increment_kg: number;
+  preferred_rep_range_min: number;
+  preferred_rep_range_max: number;
+  default_rest_minutes: number;
+  rir_floor: number;
+  set_cap: number;
+  minimum_weight_kg: number;
+  maximum_weight_kg: number;
+  requires_spotter: boolean;
+  tags: string[];
+  review_status?: string;
+  reviewer_id?: string;
+  reviewed_at?: string;
+  created_at?: string;
+  last_modified?: string;
+}

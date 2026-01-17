@@ -1,0 +1,63 @@
+{
+  "cli": {
+    "version": ">= 16.19.1",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false,
+        "resourceClass": "m-medium"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "NODE_ENV": "production"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "buildConfiguration": "Release",
+        "resourceClass": "m-medium"
+      }
+    }
+  },
+  "submit": {
+    "preview": {
+      "ios": {
+        "appleId": "lucaschatham@icloud.com",
+        "appleTeamId": "867F4386ER",
+        "ascAppId": "6749028611"
+      }
+    },
+    "production": {
+      "ios": {
+        "appleId": "lucaschatham@icloud.com",
+        "appleTeamId": "867F4386ER",
+        "ascAppId": "6749028611"
+      },
+      "android": {
+        "track": "internal"
+      }
+    }
+  }
+}

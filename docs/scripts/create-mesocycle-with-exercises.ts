@@ -1,0 +1,387 @@
+import { createClient } from '@supabase/supabase-js';
+
+import { environment } from '../../src/config/environment';
+import { IMesocycle } from '../../src/training-module/mesocycle/data/interfaces/mesocycle';
+import { ICreateMesocycleParams } from '../../src/training-module/mesocycle/data/params/create-mesocycle-params';
+import { IWorkout } from '../../src/training-module/workout/data/interfaces/workout';
+import { IWorkoutExercise } from '../../src/training-module/workout/data/interfaces/workout-exercise';
+import { IWorkoutSet } from '../../src/training-module/workout/data/interfaces/workout-set';
+import { ICreateWorkoutExerciseParams } from '../../src/training-module/workout/data/params/create-workout-exercise-params';
+import { ICreateWorkoutParams } from '../../src/training-module/workout/data/params/create-workout-params';
+import { ICreateWorkoutSetParams } from '../../src/training-module/workout/data/params/set/create-workout-set-params';
+
+const supabase = createClient(
+  environment.supabase.url,
+  environment.supabase.anonKey
+);
+
+type AsyncResponse<T, E = Error> =
+  | { status: 'ok'; data: T }
+  | { status: 'error'; error: E };
+
+class IRepository {
+  static tableName: string;
+
+  static get table() {
+    return supabase.from(this.tableName);
+  }
+
+  protected static async errorHandlingWrapper<T>(
+    wrapper: () => Promise<any>
+  ): Promise<AsyncResponse<T>> {
+    try {
+      const response = await wrapper();
+
+      return {
+        status: 'ok',
+        data: response,
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        error: error as Error,
+      };
+    }
+  }
+}
+
+class MesocycleRepository extends IRepository {
+  static tableName: string = 'mesocycle';
+
+  static create(
+    params: ICreateMesocycleParams
+  ): Promise<AsyncResponse<IMesocycle>> {
+    return this.errorHandlingWrapper(async () => {
+      const mesocycleData: ICreateMesocycleParams = {
+        ...params,
+        created_at: new Date().toISOString(),
+        last_modified: new Date().toISOString(),
+      };
+
+      const { data, error } = await this.table
+        .insert([mesocycleData])
+        .select()
+        .single<IMesocycle>();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    });
+  }
+}
+
+class WorkoutRepository extends IRepository {
+  static tableName: string = 'workouts';
+
+  static create(
+    params: ICreateWorkoutParams
+  ): Promise<AsyncResponse<IWorkout>> {
+    return this.errorHandlingWrapper(async () => {
+      const workoutData: ICreateWorkoutParams = {
+        ...params,
+        started_at: params.started_at || new Date().toISOString(),
+        is_public: params.is_public ?? false,
+        created_at: new Date().toISOString(),
+        last_modified: new Date().toISOString(),
+      };
+
+      const { data, error } = await this.table
+        .insert([workoutData])
+        .select()
+        .single<IWorkout>();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    });
+  }
+}
+
+class WorkoutExerciseRepository extends IRepository {
+  static tableName: string = 'workout_exercises';
+
+  static async create(
+    params: ICreateWorkoutExerciseParams
+  ): Promise<AsyncResponse<IWorkoutExercise>> {
+    return this.errorHandlingWrapper(async () => {
+      const workoutExerciseData: ICreateWorkoutExerciseParams & {
+        created_at: string;
+        last_modified: string;
+      } = {
+        ...params,
+        created_at: new Date().toISOString(),
+        last_modified: new Date().toISOString(),
+      };
+
+      const { data, error } = await this.table
+        .insert([workoutExerciseData])
+        .select()
+        .single<IWorkoutExercise>();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    });
+  }
+
+  static async getLastExerciseIndex(
+    workoutId: string
+  ): Promise<AsyncResponse<number>> {
+    return this.errorHandlingWrapper(async () => {
+      const { data, error } = await this.table
+        .select<'order_index', { order_index: number }>('order_index')
+        .eq('workout_id', workoutId)
+        .order('order_index', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return 0;
+        }
+
+        throw error;
+      }
+
+      return data.order_index;
+    });
+  }
+}
+
+class WorkoutSetRepository extends IRepository {
+  static tableName: string = 'workout_sets';
+
+  static async create(
+    params: ICreateWorkoutSetParams
+  ): Promise<AsyncResponse<IWorkoutSet>> {
+    return this.errorHandlingWrapper(async () => {
+      const workoutSetData: ICreateWorkoutSetParams & {
+        created_at: string;
+        last_modified: string;
+      } = {
+        ...params,
+        created_at: new Date().toISOString(),
+        last_modified: new Date().toISOString(),
+      };
+
+      const { data, error } = await this.table
+        .insert([workoutSetData])
+        .select()
+        .single<IWorkoutSet>();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    });
+  }
+}
+
+class CreateWorkoutExerciseWithSetsUseCase {
+  static async execute({
+    workoutId,
+    exerciseId,
+    defaultSets,
+  }: {
+    workoutId: string;
+    exerciseId: string;
+    defaultSets: number;
+  }): Promise<AsyncResponse<boolean>> {
+    const workoutLatestExerciseIndexRequest =
+      await WorkoutExerciseRepository.getLastExerciseIndex(workoutId);
+
+    if (workoutLatestExerciseIndexRequest.status === 'error') {
+      return workoutLatestExerciseIndexRequest;
+    }
+
+    const orderIndex = workoutLatestExerciseIndexRequest.data;
+
+    const createWorkoutExerciseRequest = await WorkoutExerciseRepository.create(
+      {
+        workout_id: workoutId,
+        exercise_id: exerciseId,
+        order_index: orderIndex + 1,
+        soreness_from_last: 1,
+        auto_generate_warmups: false,
+      }
+    );
+
+    if (createWorkoutExerciseRequest.status === 'error') {
+      return createWorkoutExerciseRequest;
+    }
+
+    const workoutExercise = createWorkoutExerciseRequest.data;
+
+    const workoutSetsPromises = [];
+    for (let i = 0; i < defaultSets; i++) {
+      const createWorkoutSetRequest = await WorkoutSetRepository.create({
+        workout_exercise_id: workoutExercise.id,
+        set_number: i + 1,
+        target_reps: 10,
+        weight_kg: 0,
+        target_rir_raw: 2,
+        status: 'not_started',
+      });
+
+      workoutSetsPromises.push(createWorkoutSetRequest);
+    }
+
+    const workoutSets = await Promise.all(workoutSetsPromises);
+    for (const set of workoutSets) {
+      if (set.status === 'error') {
+        console.log('error 3', set.error);
+        return { status: 'error', error: set.error };
+      }
+    }
+
+    return { status: 'ok', data: true };
+  }
+}
+
+enum MesocycleGoal {
+  STRENGTH = 'strength',
+  HYPERTROPHY = 'hypertrophy',
+  POWER = 'power',
+}
+
+const WEEK_DAY_TO_NUMBER = {
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6,
+} as const;
+
+const workouts: Record<string, string[]> = {
+  [WEEK_DAY_TO_NUMBER.Monday]: [
+    '550e8400-e29b-41d4-a716-446655440160',
+    '550e8400-e29b-41d4-a716-446655440122',
+    '550e8400-e29b-41d4-a716-446655440022',
+    '550e8400-e29b-41d4-a716-446655440092',
+    '550e8400-e29b-41d4-a716-446655440017',
+    '550e8400-e29b-41d4-a716-446655440087',
+    '550e8400-e29b-41d4-a716-446655440053',
+  ],
+  [WEEK_DAY_TO_NUMBER.Tuesday]: [
+    '550e8400-e29b-41d4-a716-446655440101',
+    '550e8400-e29b-41d4-a716-446655440001',
+    '550e8400-e29b-41d4-a716-446655440003',
+    '550e8400-e29b-41d4-a716-446655440001',
+  ],
+  [WEEK_DAY_TO_NUMBER.Wednesday]: [
+    '550e8400-e29b-41d4-a716-446655440082',
+    '550e8400-e29b-41d4-a716-446655440143',
+    '550e8400-e29b-41d4-a716-446655440065',
+    '550e8400-e29b-41d4-a716-446655440013',
+    '550e8400-e29b-41d4-a716-446655440021',
+    '550e8400-e29b-41d4-a716-446655440091',
+    '550e8400-e29b-41d4-a716-446655440075',
+  ],
+  [WEEK_DAY_TO_NUMBER.Thursday]: [
+    '550e8400-e29b-41d4-a716-446655440007',
+    '550e8400-e29b-41d4-a716-446655440050',
+    '550e8400-e29b-41d4-a716-446655440199',
+    '550e8400-e29b-41d4-a716-446655440040',
+  ],
+  [WEEK_DAY_TO_NUMBER.Friday]: [
+    '550e8400-e29b-41d4-a716-446655440154',
+    '550e8400-e29b-41d4-a716-446655440122',
+    '550e8400-e29b-41d4-a716-446655440198',
+    '550e8400-e29b-41d4-a716-446655440039',
+    '550e8400-e29b-41d4-a716-446655440050',
+    '550e8400-e29b-41d4-a716-446655440029',
+  ],
+};
+
+const targetUserId: string = '876037e8-7567-4b48-9a86-7ed8fc2c41c4';
+const mesocycleName: string = 'copy of Kevin Mesocycle';
+const numberOfWeeks = 4;
+const goal: MesocycleGoal = MesocycleGoal.STRENGTH;
+
+const create = async () => {
+  const mesocycleRequest = await MesocycleRepository.create({
+    user_id: targetUserId,
+    name: mesocycleName,
+    start_date: new Date().toISOString().split('T')[0],
+    num_weeks: numberOfWeeks,
+    days_per_week: Object.values(workouts).length,
+    goal,
+  });
+
+  if (mesocycleRequest.status === 'error') {
+    console.log('failed to create mesocycle');
+
+    return;
+  }
+
+  const mesocycle = mesocycleRequest.data;
+
+  const workoutsStartDate = new Date().toISOString();
+  await Promise.all(
+    Object.keys(workouts).map(async (day, workoutIndex) => {
+      for (let i = 0; i < numberOfWeeks; i++) {
+        const workoutRequest = await WorkoutRepository.create({
+          user_id: targetUserId,
+          mesocycle_block_id: mesocycle.id,
+          workout_day: workoutIndex + 1,
+          workout_week: i + 1,
+          started_at: workoutsStartDate,
+          is_public: false,
+        });
+
+        if (workoutRequest.status === 'error') {
+          console.log('failed to create workout');
+
+          return;
+        }
+
+        const workout = workoutRequest.data;
+
+        await Promise.all(
+          workouts[day].map(async exercise => {
+            await CreateWorkoutExerciseWithSetsUseCase.execute({
+              workoutId: workout.id,
+              exerciseId: exercise,
+              defaultSets: 3,
+              workoutWeek: i + 1, // Pass the workout week for calibration logic
+            });
+          })
+        );
+      }
+    })
+  );
+
+  console.log('Successfully created');
+};
+
+let canCreate: boolean = true;
+if (!targetUserId) {
+  console.log('Target user id is empty!');
+  canCreate = false;
+}
+
+if (!mesocycleName) {
+  console.log('Mesocycle name cant be empty!');
+  canCreate = false;
+}
+if (numberOfWeeks < 4 || numberOfWeeks > 8) {
+  console.log('Mesocycle cant be less than 4 weeks and more than 8 weeks!');
+  canCreate = false;
+}
+
+if (!goal) {
+  console.log('Mesocycle cant be less than 4 weeks and more than 8 weeks!');
+  canCreate = false;
+}
+
+if (canCreate) {
+  create();
+}

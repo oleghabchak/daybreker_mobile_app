@@ -1,0 +1,241 @@
+Locked‑down, simple, 14‑year‑old‑explainable spec. Includes how the **exercise\_library** is used, with your tweaks.
+
+---
+
+## A) Assumptions (keep it simple)
+
+* **No measurements, no 28‑day ratio loop** (removed).
+* **No auto‑swaps**. If something hurts or is busy: user manually swaps; we just **limit set progression** when pain/fatigue flags show up.
+* **Filters = only 2 hard rules:** (1) must have the **equipment**, (2) must **not** violate injury **contraindications**. Preferences/constraints ignored for now.
+* **Top‑3 priorities** from the user drive exercise emphasis.
+* **Volume caps:** start **8–12** sets/week/muscle, cap **≤24**.
+* **Sex‑aware minimums (very simple):**
+
+  * Priority muscles: **male ≥8 sets/wk**, **female ≥10 sets/wk**.
+  * Maintenance muscles: **3–6 sets/wk** regardless of sex.
+* **If time is tight** (≤3 days/week **or** ≤45 min/session), pick **high‑SFR** exercises for priority muscles.
+* **RIR targets:**
+
+  * Normal weeks: allow **RIR 0–4** (we usually aim 1–2).
+  * **Peak week** (right before deload): **RIR can hit 0** on last set.
+  * **Deload week:** aim **RIR 6–8**, \~50% sets.
+
+---
+
+## B) What the exercise\_library looks like (minimal)
+
+One row per exercise with only what we’ll actually use right now.
+
+**Required columns**
+
+* `exercise_uid` (string)
+* `display_name` (string)
+* `canonical_id` (string) – family name (e.g., `lat_pulldown`)
+* `prime_movers` (string\[]) – e.g., `["lats","lateral_delts"]`
+* `movement_pattern` (string) – e.g., `vertical_pull`, `horizontal_push`, `hinge`, `squat`, `abduction`, `curl`, etc.
+* `implement_primary` (enum) – `barbell|dumbbell|machine|cable|bodyweight|smith|band`
+* `equipment_required` (string\[]) – names that must exist in the user’s gym list
+* `contraindications` (string\[]) – e.g., `["shoulder_pain","knee_pain","spine_pain"]`
+* `sfr_rank` (enum) – `high|medium|low` (stimulus‑to‑fatigue)
+* `tier` (enum) – `T1|T2` (use T1 as first picks)
+* `substitution_cluster` (string\[]) – list of **canonical\_id** alternates (user can pick manually)
+* `regressions` (string\[]) – easier options
+* `progressions` (string\[]) – harder options
+
+*(Optional nice‑to‑haves we ignore for now: angle, grip, ROM, notes.)*
+
+**Example rows**
+
+```json
+{
+  "exercise_uid": "ex_lat_pd_pron_sw",
+  "display_name": "Lat Pulldown (Pronated, Shoulder-Width)",
+  "canonical_id": "lat_pulldown",
+  "prime_movers": ["lats"],
+  "movement_pattern": "vertical_pull",
+  "implement_primary": "cable",
+  "equipment_required": ["Lat pulldown station"],
+  "contraindications": ["shoulder_pain"],
+  "sfr_rank": "high",
+  "tier": "T1",
+  "substitution_cluster": ["pullup_assisted","machine_high_row","single_arm_cable_lat"],
+  "regressions": ["pullup_assisted"],
+  "progressions": ["weighted_pullup"]
+}
+```
+
+```json
+{
+  "exercise_uid": "ex_hip_thrust_bb",
+  "display_name": "Barbell Hip Thrust",
+  "canonical_id": "hip_thrust",
+  "prime_movers": ["glutes"],
+  "movement_pattern": "thrust",
+  "implement_primary": "barbell",
+  "equipment_required": ["Barbell","Bench","Pads"],
+  "contraindications": ["hip_pain","spine_pain"],
+  "sfr_rank": "high",
+  "tier": "T1",
+  "substitution_cluster": ["hip_thrust_machine","glute_bridge","45deg_hip_extension"],
+  "regressions": ["glute_bridge"],
+  "progressions": ["hip_thrust_paused","hip_thrust_heavy"]
+}
+```
+
+---
+
+## C) Pathway bias rules (who gets emphasized)
+
+**Inputs:** `sex_at_birth` (male/female), `desired_aesthetic` (masculine/feminine), `top3_priority_muscles` (e.g., `["glutes","delts","lats"]`).
+
+**Muscle emphasis**
+
+* **Male → Masculine**: **lats + delts (lateral+rear) + upper chest**; chest & back that widen V. Legs moderate.
+* **Male → Feminine**: **glutes + hamstrings + abduction**; include **incline chest** for shape; **de‑emphasize lateral delts/back width** (maintenance only).
+* **Female → Masculine**: **delts + lats + back thickness + pressing** (V‑taper); legs mostly strength maintenance.
+* **Female → Feminine**: **glutes + hamstrings + quads** (curves); upper body mostly maintenance.
+
+**Priority override:** Always bias **top‑3 user priorities** on top of the pathway.
+
+---
+
+## D) Mesocycle builder (plain-speak pseudocode)
+
+```text
+FUNCTION build_mesocycle_plan(user, library):
+
+  // 1) Budget
+  sets_budget = floor((user.days_per_week * user.minutes_per_session) / 3)
+
+  // 2) Per-muscle starting sets
+  FOR each muscle IN all_muscles:
+      base = 8..12  // choose 10 as center; keep simple
+      IF muscle in user.top3_priorities: base += 2  // small bump
+      IF user.sex_at_birth == 'female' AND muscle in user.top3_priorities: 
+          base = max(base, 10)  // female priority floor
+      mark maintenance muscles at 3..6 sets
+  enforce per-muscle cap <= 24
+  shrink proportionally if total sets exceed sets_budget
+
+  // 3) Frequency
+  FOR each muscle:
+      IF muscle is priority: touches = 2..4 per week
+      ELSE: touches = 1..2 per week
+
+  // 4) Select exercises from exercise_library (simple filters)
+  candidates = library
+  candidates = candidates WHERE exercise.equipment_required ⊆ user.equipment
+  candidates = candidates WHERE NOT (exercise.contraindications intersects user.injury_flags)
+
+  // 5) Time-tight rule → prefer high-SFR for priorities
+  time_tight = (user.days_per_week <= 3) OR (user.minutes_per_session <= 45)
+
+  // 6) For each muscle, pick exercises
+  FOR each muscle:
+      pool = candidates WHERE muscle IN exercise.prime_movers
+      IF time_tight AND muscle is priority:
+          pool = pool WHERE exercise.sfr_rank == 'high'
+      // super simple ranking: Tier 1 first, then Tier 2
+      tier1 = first N from pool WHERE tier == 'T1'
+      tier2 = first M from pool WHERE tier == 'T2'
+      choose 2–3 from tier1 and up to 1–2 from tier2 (if needed)
+      distribute that muscle’s weekly sets across chosen exercises (≈60% T1, 40% T2)
+
+  // 7) Set in-session targets
+  FOR each exercise:
+      set rep_range = (compound: 6–12) or (isolation: 10–20)
+      set RIR_target = 1–2 (allow 0–4 during normal weeks)
+      schedule across touches/week
+
+  // 8) Periodization shell (simple)
+  weeks_in_block = user.cycle_length_weeks (e.g., 4 or 5)
+  peak_week = weeks_in_block - 1
+  deload_week = weeks_in_block
+  FOR week = 1..weeks_in_block:
+      IF week == peak_week: allow RIR 0 on last set of key lifts
+      IF week == deload_week:
+          cut each muscle's sets by ~50%
+          set all RIR targets to 6–8
+
+  RETURN weekly_plan (sessions, exercises, sets, reps, RIR)
+```
+
+---
+
+## E) Workout progression (simple)
+
+```text
+FOR each exercise, each time you repeat it:
+
+  // Double progression:
+  IF last_set_RIR >= 2 AND current_reps < top_of_range:
+      next_target_reps = current_reps + 1
+      next_load = same
+  ELSE IF current_reps == top_of_range AND last_set_RIR >= 1:
+      next_load = round(current_load * (1 + step%), to nearest plate)
+        where step% = 2.5% (upper) or 3.0% (lower)
+      next_target_reps = bottom_of_range
+  ELSE:
+      keep current reps and load
+
+  Log achieved RIR, pump (optional), joint pain (0–3)
+```
+
+---
+
+## F) Weekly checks (no auto swaps; just manage sets)
+
+```text
+FOR each muscle at end of week:
+
+  fatigue_flag = (performance_drop >= ~2% twice) OR (DOMS > 72h) OR (joint_pain >= 2 twice)
+
+  IF fatigue_flag:
+      next_week_sets[muscle] = floor(current_sets * 0.6..0.7)  // local deload
+      // do NOT auto swap exercise; keep same moves
+  ELSE:
+      // allow small growth in volume for priority muscles if recovering well:
+      IF muscle is priority AND current_sets < 20:
+          next_week_sets[muscle] = current_sets + 2
+      ELSE:
+          next_week_sets[muscle] = current_sets
+```
+
+---
+
+## G) Manual tools (user‑initiated only)
+
+* **Swap**: user opens exercise, sees its `substitution_cluster`, picks another that fits equipment; loads estimated by app.
+* **Regression/Progression**: same, using `regressions`/`progressions`.
+* **Pain toggle**: if joint pain persists 2+ sessions, app suggests **reduce sets** next week (we don’t auto‑swap).
+
+---
+
+## H) Pathway quick maps (what muscles count as “priority by pathway”)
+
+```text
+IF sex=male & aesthetic=masculine:
+   add to priority_pool: lats, lateral_delts, rear_delts, upper_chest
+IF sex=male & aesthetic=feminine:
+   add to priority_pool: glutes, hamstrings, hip_abduction
+   set lateral_delts + back_width to maintenance
+IF sex=female & aesthetic=masculine:
+   add to priority_pool: delts (lat+rear), lats, back_thickness, pressing
+   set legs mostly maintenance (strength focus if included)
+IF sex=female & aesthetic=feminine:
+   add to priority_pool: glutes, hamstrings, quads
+```
+
+Then **union** that `priority_pool` with the **user’s top‑3 priorities** (dedupe). Those muscles get the higher starting sets, higher touches/week, and (if time‑tight) the high‑SFR rule.
+
+---
+
+## I) What the app needs to implement now (tiny)
+
+* **Function** `filterByGymAndInjuries(exercises, user)` → candidates.
+* **Function** `pickExercisesForMuscle(candidates, muscle, time_tight)` → 2–4 exercises, T1 first, optionally `sfr_rank='high'` if time‑tight.
+* **Function** `distributeSets(perMuscleSets, chosenExercises)` → 60/40 split across T1/T2.
+* **Function** `progressRepLoad(lastSet, repRange, upperOrLower)` → next reps/load.
+* **Function** `weeklySetAdjust(muscle, flags, isPriority, currentSets)` → new sets.
+
+That’s it. No ratios. No constraints. No auto‑swaps. High‑SFR only when time is tight. Priority = pathway bias **plus** user’s top‑3. Volume simple, sex‑aware minimums, and guardrails.

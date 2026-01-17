@@ -1,0 +1,232 @@
+{
+  "summary": {
+    "totalFiles": 36,
+    "filesUsingOldTheme": 16,
+    "filesUsingNewComponents": 0
+  },
+  "migrationOrder": [
+    {
+      "order": 1,
+      "path": "../constants/theme.ts",
+      "complexity": 3,
+      "status": "pending"
+    },
+    {
+      "order": 2,
+      "path": "../components/ui/Button.tsx",
+      "complexity": 3,
+      "status": "pending"
+    },
+    {
+      "order": 3,
+      "path": "../components/ui/Input.tsx",
+      "complexity": 3,
+      "status": "pending"
+    },
+    {
+      "order": 4,
+      "path": "../components/ui/Toggle.tsx",
+      "complexity": 3,
+      "status": "pending"
+    },
+    {
+      "order": 5,
+      "path": "../components/ui/index.ts",
+      "complexity": 0,
+      "status": "pending"
+    },
+    {
+      "order": 6,
+      "path": "../components/ErrorBoundary.new.tsx",
+      "complexity": 2,
+      "status": "pending"
+    },
+    {
+      "order": 7,
+      "path": "../components/ErrorBoundary.tsx",
+      "complexity": 3,
+      "status": "pending"
+    },
+    {
+      "order": 8,
+      "path": "../components/ErrorNotification.tsx",
+      "complexity": 4,
+      "status": "pending"
+    },
+    {
+      "order": 9,
+      "path": "../components/NotificationProvider.tsx",
+      "complexity": 1,
+      "status": "pending"
+    },
+    {
+      "order": 10,
+      "path": "../utils/migrationHelpers.ts",
+      "complexity": 0,
+      "status": "pending"
+    },
+    {
+      "order": 11,
+      "path": "../utils/featureFlags.ts",
+      "complexity": 0,
+      "status": "pending"
+    },
+    {
+      "order": 12,
+      "path": "../lib/supabase.ts",
+      "complexity": 0,
+      "status": "pending"
+    },
+    {
+      "order": 13,
+      "path": "../config/googleSignIn.ts",
+      "complexity": 1,
+      "status": "pending"
+    },
+    {
+      "order": 14,
+      "path": "../services/socialAuth.ts",
+      "complexity": 2,
+      "status": "pending"
+    },
+    {
+      "order": 15,
+      "path": "../services/errorNotificationManager.ts",
+      "complexity": 2,
+      "status": "pending"
+    },
+    {
+      "order": 16,
+      "path": "../config/terraApi.ts",
+      "complexity": 2,
+      "status": "pending"
+    },
+    {
+      "order": 17,
+      "path": "../types/index.ts",
+      "complexity": 3,
+      "status": "pending"
+    },
+    {
+      "order": 18,
+      "path": "../screens/WelcomeSplash.tsx",
+      "complexity": 5,
+      "status": "pending"
+    },
+    {
+      "order": 19,
+      "path": "../screens/UnifiedPermissionsScreen.tsx",
+      "complexity": 9,
+      "status": "pending"
+    },
+    {
+      "order": 20,
+      "path": "../screens/PrioritiesScreen.tsx",
+      "complexity": 6,
+      "status": "pending"
+    },
+    {
+      "order": 21,
+      "path": "../screens/PermissionsScreen.tsx",
+      "complexity": 8,
+      "status": "pending"
+    },
+    {
+      "order": 22,
+      "path": "../screens/Dashboard.tsx",
+      "complexity": 27,
+      "status": "pending"
+    },
+    {
+      "order": 23,
+      "path": "../screens/AuthScreen.tsx",
+      "complexity": 16,
+      "status": "pending"
+    },
+    {
+      "order": 24,
+      "path": "../screens/test/MigrationTestScreen.tsx",
+      "complexity": 7,
+      "status": "pending"
+    },
+    {
+      "order": 25,
+      "path": "../screens/test/ButtonMigrationTest.tsx",
+      "complexity": 2,
+      "status": "pending"
+    },
+    {
+      "order": 26,
+      "path": "../screens/onboarding/StressManagementScreen.tsx",
+      "complexity": 22,
+      "status": "pending"
+    },
+    {
+      "order": 27,
+      "path": "../screens/onboarding/SleepHabitsScreen.tsx",
+      "complexity": 25,
+      "status": "pending"
+    },
+    {
+      "order": 28,
+      "path": "../screens/onboarding/MedicationsScreen.tsx",
+      "complexity": 24,
+      "status": "pending"
+    },
+    {
+      "order": 29,
+      "path": "../screens/onboarding/MedicalHistoryScreen.tsx",
+      "complexity": 17,
+      "status": "pending"
+    },
+    {
+      "order": 30,
+      "path": "../screens/onboarding/LifestyleScreen.tsx",
+      "complexity": 21,
+      "status": "pending"
+    },
+    {
+      "order": 31,
+      "path": "../screens/onboarding/HealthGoalsScreen.tsx",
+      "complexity": 10,
+      "status": "pending"
+    },
+    {
+      "order": 32,
+      "path": "../screens/onboarding/DigitalTwinScreen.tsx",
+      "complexity": 23,
+      "status": "pending"
+    },
+    {
+      "order": 33,
+      "path": "../screens/onboarding/DeviceConnectionsScreen.tsx",
+      "complexity": 25,
+      "status": "pending"
+    },
+    {
+      "order": 34,
+      "path": "../screens/onboarding/ConsentScreen.tsx",
+      "complexity": 23,
+      "status": "pending"
+    },
+    {
+      "order": 35,
+      "path": "../screens/onboarding/CompletionScreen.tsx",
+      "complexity": 23,
+      "status": "pending"
+    },
+    {
+      "order": 36,
+      "path": "../screens/onboarding/BasicInfoScreen.tsx",
+      "complexity": 12,
+      "status": "pending"
+    }
+  ],
+  "criticalPath": [
+    "/Users/HQ/builds/daybreaker_portal/src/constants/theme",
+    "/Users/HQ/builds/daybreaker_portal/src/lib/supabase",
+    "/Users/HQ/builds/daybreaker_portal/src/services/errorNotificationManager",
+    "/Users/HQ/builds/daybreaker_portal/src/components/ui",
+    "/Users/HQ/builds/daybreaker_portal/src/utils/featureFlags"
+  ]
+}

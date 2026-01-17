@@ -1,0 +1,62 @@
+{
+  "user_id": "123e4567-e89b-12d3-a456-426614174000",
+  "name": "Complete Mesocycle Test",
+  "start_date": "2024-01-15",
+  "num_weeks": 6,
+  "goal": "hypertrophy",
+  "status": "planning",
+  "workout_days": ["Monday", "Wednesday", "Friday"],
+  "days_per_week": 3,
+  "muscle_emphasis": ["chest", "back", "legs"],
+  "length_weeks": 6,
+  "minutes_per_session": 60,
+  "weight_now": 75.5,
+  "joint_pain_now": [],
+  "split_type": "push_pull_legs",
+  "exercise_variation": 1,
+  "workouts_data": [
+    {
+      "workout_day": 1,
+      "workout_week": 1,
+      "started_at": "2024-01-15T10:00:00Z",
+      "is_public": false
+    },
+    {
+      "workout_day": 2,
+      "workout_week": 1,
+      "started_at": "2024-01-17T10:00:00Z",
+      "is_public": false
+    }
+  ],
+  "exercises_data": [
+    {
+      "exercise_id": "550e8400-e29b-41d4-a716-446655440000",
+      "order_index": 1,
+      "soreness_from_last": 3
+    },
+    {
+      "exercise_id": "550e8400-e29b-41d4-a716-446655440001",
+      "order_index": 2,
+      "soreness_from_last": 3
+    }
+  ],
+  "sets_data": [
+    {
+      "set_number": 1,
+      "target_reps": 10,
+      "weight_kg": 60,
+      "target_rir_raw": 2,
+      "status": "pending",
+      "set_type": "working"
+    },
+    {
+      "set_number": 2,
+      "target_reps": 10,
+      "weight_kg": 60,
+      "target_rir_raw": 2,
+      "status": "pending",
+      "set_type": "working"
+    }
+  ]
+}
+
